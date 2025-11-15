@@ -439,6 +439,95 @@ print_summary() {
 }
 
 ###############################################################################
+# Uninstall functions
+###############################################################################
+stop_disable_service() {
+  log "Stopping and disabling Incus service"
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl stop incus 2>/dev/null || log "Failed to stop incus service (may not exist)"
+    systemctl disable incus 2>/dev/null || log "Failed to disable incus service (may not exist)"
+    systemctl stop incus.socket 2>/dev/null || true
+    systemctl disable incus.socket 2>/dev/null || true
+  else
+    log "systemctl not available; skipping service stop"
+  fi
+}
+
+uninstall_packages() {
+  log "Removing Incus packages"
+  if [ "$PKG" = "apt" ]; then
+    apt-get remove -y incus incus-client 2>/dev/null || log "apt remove failed or packages not installed"
+    apt-get autoremove -y 2>/dev/null || true
+  elif [ "$PKG" = "dnf" ]; then
+    dnf remove -y incus incus-client 2>/dev/null || log "dnf remove failed or packages not installed"
+  elif [ "$PKG" = "yum" ]; then
+    yum remove -y incus incus-client 2>/dev/null || log "yum remove failed or packages not installed"
+  fi
+}
+
+remove_compiled_binary() {
+  log "Removing compiled Incus binary"
+  if [ -f /usr/local/bin/incus ]; then
+    rm -f /usr/local/bin/incus || log "Failed to remove /usr/local/bin/incus"
+    log "Removed /usr/local/bin/incus"
+  fi
+  if [ -d /usr/local/src/incus ]; then
+    rm -rf /usr/local/src/incus || log "Failed to remove /usr/local/src/incus"
+    log "Removed /usr/local/src/incus"
+  fi
+}
+
+remove_systemd_unit_files() {
+  log "Removing systemd unit files"
+  if [ -f /etc/systemd/system/incus.service ]; then
+    rm -f /etc/systemd/system/incus.service || log "Failed to remove incus.service"
+  fi
+  if [ -f /etc/systemd/system/incus.socket ]; then
+    rm -f /etc/systemd/system/incus.socket || log "Failed to remove incus.socket"
+  fi
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload || true
+  fi
+}
+
+remove_cert_and_keys() {
+  log "Removing client certificates and keys"
+  if [ -f "$CLIENT_KEY" ]; then
+    rm -f "$CLIENT_KEY" || log "Failed to remove $CLIENT_KEY"
+  fi
+  if [ -f "$CLIENT_CRT" ]; then
+    rm -f "$CLIENT_CRT" || log "Failed to remove $CLIENT_CRT"
+  fi
+}
+
+cleanup_repos_and_configs() {
+  log "Cleaning up repository configurations"
+  if [ -f /etc/apt/sources.list.d/zabbly-incus-stable.sources ]; then
+    rm -f /etc/apt/sources.list.d/zabbly-incus-stable.sources || log "Failed to remove Zabbly repo"
+  fi
+  if [ -f /etc/apt/keyrings/zabbly.asc ]; then
+    rm -f /etc/apt/keyrings/zabbly.asc || log "Failed to remove Zabbly keyring"
+  fi
+}
+
+remove_data_dirs() {
+  log "WARNING: About to remove Incus data directories"
+  if [ "$NONINTERACTIVE" = false ]; then
+    if ! confirm "Remove /var/lib/incus and all container/VM data? This is DESTRUCTIVE."; then
+      log "Skipping data directory removal"
+      return 0
+    fi
+  fi
+  if [ -d /var/lib/incus ]; then
+    rm -rf /var/lib/incus || log "Failed to remove /var/lib/incus"
+    log "Removed /var/lib/incus"
+  fi
+  if [ -d /var/cache/incus ]; then
+    rm -rf /var/cache/incus || log "Failed to remove /var/cache/incus"
+  fi
+}
+
+###############################################################################
 # Flows
 ###############################################################################
 install_flow() {
@@ -478,6 +567,44 @@ install_flow() {
 
   log "STEP: install_flow end"
   say "${C_GREEN}${C_BOLD}✅ Install complete.${C_RESET}"
+}
+
+regenerate_token_flow() {
+  clear || true
+  logo
+  headline "Regenerate Trust Token • DeployLXC"
+
+  ensure_root
+  ensure_log
+
+  if ! command -v incus >/dev/null 2>&1; then
+    die "Incus is not installed. Please install Incus first."
+  fi
+
+  log "Generating new trust token"
+  echo
+  say "${C_BOLD}Generating new trust token...${C_RESET}"
+  echo
+
+  if TOKEN=$(incus config trust add --quiet 2>&1); then
+    echo "=========================================="
+    say "${C_GREEN}${C_BOLD}✅ Trust token generated successfully!${C_RESET}"
+    echo "=========================================="
+    echo
+    say "${C_BOLD}Your new trust token:${C_RESET}"
+    echo
+    say "${C_CYAN}${TOKEN}${C_RESET}"
+    echo
+    echo "=========================================="
+    log "Trust token generated successfully"
+  else
+    echo
+    say "${C_RED}${C_BOLD}❌ Failed to generate trust token${C_RESET}"
+    log "Failed to generate trust token: $TOKEN"
+    echo
+    say "${C_YELLOW}Error details:${C_RESET} $TOKEN"
+  fi
+  echo
 }
 
 uninstall_flow() {
@@ -548,17 +675,19 @@ show_menu() {
   cat <<'EOF'
 1) Install (recommended)
 2) Uninstall (full - destructive)
-3) Update script (self-update from Releases)
-4) Help
-5) Exit
+3) Regenerate trust token
+4) Update script (self-update from Releases)
+5) Help
+6) Exit
 EOF
-  read -rp "Select option [1-5]: " choice
+  read -rp "Select option [1-6]: " choice
   case "${choice:-}" in
     1) install_flow ;;
     2) uninstall_flow ;;
-    3) self_update ;;
-    4|h|H|\?) print_usage; read -rp "Press Enter to return..." _; show_menu ;;
-    5) echo "Exit"; exit 0 ;;
+    3) regenerate_token_flow ;;
+    4) self_update ;;
+    5|h|H|\?) print_usage; read -rp "Press Enter to return..." _; show_menu ;;
+    6) echo "Exit"; exit 0 ;;
     *) echo "Invalid choice"; exit 2 ;;
   esac
 }
@@ -570,6 +699,7 @@ Usage: sudo bash deploylxc.sh [options] [command]
 Commands:
   install           Run installer (equivalent to --yes install)
   uninstall         Run full uninstall (prompts unless --yes)
+  regenerate-token  Generate a new trust token for remote access
   update            Self-update the script from GitHub Releases
 
 Options:
@@ -588,6 +718,7 @@ Examples:
   sudo bash deploylxc.sh --no-init install
   sudo bash deploylxc.sh --project myproj install
   sudo bash deploylxc.sh --quiet install    # still writes to $LOG
+  sudo bash deploylxc.sh regenerate-token
 Log file: $LOG
 EOF
 }
@@ -604,7 +735,7 @@ while [ $# -gt 0 ]; do
     --git-ref) GIT_REF="${2:-}"; shift 2 ;;
     --verbose) LOG_TO_CONSOLE=true; shift ;;
     --quiet)   LOG_TO_CONSOLE=false; shift ;;
-    install|uninstall|update) CMD="$1"; shift ;;
+    install|uninstall|update|regenerate-token) CMD="$1"; shift ;;
     --help|-h) print_usage; exit 0 ;;
     *) echo "Unknown arg: $1"; print_usage; exit 2 ;;
   esac
@@ -624,6 +755,9 @@ main_dispatch() {
       ;;
     uninstall)
       uninstall_flow
+      ;;
+    regenerate-token)
+      regenerate_token_flow
       ;;
     update)
       self_update
