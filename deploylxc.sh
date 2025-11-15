@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# incus/incus.sh
+# incus/deploylxc.sh
 #
 # Installer / manager for Incus on VPS
 # Provides:
@@ -9,11 +9,11 @@
 #  - Update script (self-update from GitHub Releases)
 #
 # Usage:
-#   sudo bash incus.sh             # interactive menu
-#   sudo bash incus.sh --yes       # default install, non-interactive
-#   sudo bash incus.sh install     # same as --yes + install
-#   sudo bash incus.sh uninstall   # full uninstall (prompts unless --yes)
-#   sudo bash incus.sh update      # self-update the script from Releases
+#   sudo bash deploylxc.sh             # interactive menu
+#   sudo bash deploylxc.sh --yes       # default install, non-interactive
+#   sudo bash deploylxc.sh install     # same as --yes + install
+#   sudo bash deploylxc.sh uninstall   # full uninstall (prompts unless --yes)
+#   sudo bash deploylxc.sh update      # self-update the script from Releases
 #
 set -euo pipefail
 
@@ -22,7 +22,7 @@ set -euo pipefail
 ###############################################################################
 readonly REPO_OWNER="Deploy-LXC"
 readonly REPO_NAME="control-server"
-readonly ASSET_NAME="incus.sh"
+readonly ASSET_NAME="deploylxc.sh"
 readonly ASSET_DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest/download/${ASSET_NAME}"
 
 LOG="/var/log/incus-install.log"
@@ -558,7 +558,7 @@ EOF
 
 print_usage() {
   cat <<EOF
-Usage: sudo bash incus.sh [options] [command]
+Usage: sudo bash deploylxc.sh [options] [command]
 
 Commands:
   install           Run installer (equivalent to --yes install)
@@ -577,10 +577,10 @@ Options:
   --help, -h        Show this help
 
 Examples:
-  sudo bash incus.sh --yes --backend btrfs install
-  sudo bash incus.sh --no-init install
-  sudo bash incus.sh --project myproj install
-  sudo bash incus.sh --quiet install    # still writes to $LOG
+  sudo bash deploylxc.sh --yes --backend btrfs install
+  sudo bash deploylxc.sh --no-init install
+  sudo bash deploylxc.sh --project myproj install
+  sudo bash deploylxc.sh --quiet install    # still writes to $LOG
 Log file: $LOG
 EOF
 }
