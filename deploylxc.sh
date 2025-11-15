@@ -586,7 +586,7 @@ regenerate_token_flow() {
   say "${C_BOLD}Generating new trust token...${C_RESET}"
   echo
 
-  if TOKEN=$(incus config trust add --quiet 2>&1); then
+  if TOKEN=$(incus config trust add 2>&1); then
     echo "=========================================="
     say "${C_GREEN}${C_BOLD}✅ Trust token generated successfully!${C_RESET}"
     echo "=========================================="
