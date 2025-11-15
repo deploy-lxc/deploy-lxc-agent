@@ -586,7 +586,10 @@ regenerate_token_flow() {
   say "${C_BOLD}Generating new trust token...${C_RESET}"
   echo
 
-  if TOKEN=$(incus config trust add 2>&1); then
+  # Generate a unique client name with timestamp
+  CLIENT_NAME="client-$(date +%s)"
+
+  if TOKEN=$(incus config trust add "$CLIENT_NAME" 2>&1); then
     echo "=========================================="
     say "${C_GREEN}${C_BOLD}✅ Trust token generated successfully!${C_RESET}"
     echo "=========================================="
@@ -596,7 +599,7 @@ regenerate_token_flow() {
     say "${C_CYAN}${TOKEN}${C_RESET}"
     echo
     echo "=========================================="
-    log "Trust token generated successfully"
+    log "Trust token generated successfully for $CLIENT_NAME"
   else
     echo
     say "${C_RED}${C_BOLD}❌ Failed to generate trust token${C_RESET}"
