@@ -7,7 +7,7 @@ This directory contains the deployment script for setting up LXC containers with
 To download and run the deployment script, execute the following command:
 
 ```bash
-curl -sSL https://github.com/deploy-lxc/deploy-lxc-agent/releases/download/latest/deploylxc.sh -o deploylxc.sh && chmod +x deploylxc.sh && bash deploylxc.sh
+curl -sSL https://github.com/deploy-lxc/deploy-lxc-agent/releases/latest/download/deploylxc.sh -o deploylxc.sh && chmod +x deploylxc.sh && bash deploylxc.sh
 ```
 
 ## What This Command Does
