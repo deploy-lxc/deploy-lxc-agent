@@ -360,6 +360,13 @@ do_init() {
     log "Creating project $PROJECT_NAME"
     run incus project create "$PROJECT_NAME" -c features.images=true -c features.profiles=false || log "project create failed/ignored"
   fi
+
+  log "Enabling remote API on [::]:8443"
+  if incus config set core.https_address "[::]:8443" >>"$LOG" 2>&1; then
+    log "Remote API enabled successfully"
+  else
+    log "Failed to enable remote API; check $LOG"
+  fi
 }
 
 generate_client_cert() {
