@@ -20,8 +20,8 @@ set -euo pipefail
 ###############################################################################
 # Configuration / defaults
 ###############################################################################
-readonly REPO_OWNER="Deploy-LXC"
-readonly REPO_NAME="control-server"
+readonly REPO_OWNER="deploy-lxc"
+readonly REPO_NAME="deploy-lxc-agent"
 readonly ASSET_NAME="deploylxc.sh"
 readonly ASSET_DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest/download/${ASSET_NAME}"
 
