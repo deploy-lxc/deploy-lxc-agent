@@ -559,11 +559,32 @@ install_flow() {
   print_summary
 
   log "STEP: generating trust token"
-  if incus config trust add --quiet >/dev/null 2>&1; then
-    log "A trust token has been generated."
+  echo
+  say "${C_BOLD}Generating trust token...${C_RESET}"
+  echo
+
+  # Generate a unique client name with timestamp
+  CLIENT_NAME="client-$(date +%s)"
+
+  if TOKEN=$(incus config trust add "$CLIENT_NAME" 2>&1); then
+    echo "=========================================="
+    say "${C_GREEN}${C_BOLD}✅ Trust token generated successfully!${C_RESET}"
+    echo "=========================================="
+    echo
+    say "${C_BOLD}Your trust token:${C_RESET}"
+    echo
+    say "${C_CYAN}${TOKEN}${C_RESET}"
+    echo
+    echo "=========================================="
+    log "Trust token generated successfully for $CLIENT_NAME"
   else
-    log "Failed to generate trust token."
+    echo
+    say "${C_RED}${C_BOLD}❌ Failed to generate trust token${C_RESET}"
+    log "Failed to generate trust token: $TOKEN"
+    echo
+    say "${C_YELLOW}Error details:${C_RESET} $TOKEN"
   fi
+  echo
 
   log "STEP: install_flow end"
   say "${C_GREEN}${C_BOLD}✅ Install complete.${C_RESET}"
