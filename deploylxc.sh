@@ -513,7 +513,7 @@ cleanup_repos_and_configs() {
 remove_data_dirs() {
   log "WARNING: About to remove Incus data directories"
   if [ "$NONINTERACTIVE" = false ]; then
-    if ! confirm "Remove /var/lib/incus and all container/VM data? This is DESTRUCTIVE."; then
+    if ! confirm "Remove /var/lib/incus and all instance/VM data? This is DESTRUCTIVE."; then
       log "Skipping data directory removal"
       return 0
     fi

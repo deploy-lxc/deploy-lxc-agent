@@ -1,6 +1,6 @@
 # Deploy LXC Agent - Incus
 
-This directory contains the deployment script for setting up LXC containers with Incus.
+This directory contains the deployment script for setting up LXC instances with Incus.
 
 ## Quick Start
 
